@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a4d8c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Day Counter">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Day Counter</title>
+    
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color-1: #0a4d8c;
+            --bg-color-2: #1e88e5;
+            --bg-color-3: #42a5f5;
+            --bg-color-4: #64b5f6;
+            --bg-color-5: #90caf9;
+            --orb-color-1: #1565c0;
+            --orb-color-2: #0d47a1;
+            --orb-color-3: #2196f3;
+            --glass-bg: rgba(100, 181, 246, 0.15);
+            --text-primary: #e3f2fd;
+            --text-counter: #2196f3;
+            --digit-color: #42a5f5;
+            --accent-color: #42a5f5;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+            background: transparent !important;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background: linear-gradient(135deg, 
+                var(--bg-color-1) 0%, 
+                var(--bg-color-2) 25%, 
+                var(--bg-color-3) 50%, 
+                var(--bg-color-4) 75%, 
+                var(--bg-color-5) 100%) !important;
+        }
+
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .bg-orb-1 {
+            width: min(400px, 50vw);
+            height: min(400px, 50vw);
+            background: radial-gradient(circle, var(--orb-color-1) 0%, transparent 70%);
+            top: -10%;
+            right: -10%;
+        }
+
+        .bg-orb-2 {
+            width: min(350px, 45vw);
+            height: min(350px, 45vw);
+            background: radial-gradient(circle, var(--orb-color-2) 0%, transparent 70%);
+            bottom: -10%;
+            left: -10%;
+        }
+
+        .bg-orb-3 {
+            width: min(250px, 30vw);
+            height: min(250px, 30vw);
+            background: radial-gradient(circle, var(--orb-color-3) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .poster-container {
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(20px, 5vw, 60px) clamp(15px, 4vw, 40px);
+            perspective: 1200px;
+            z-index: 10;
+        }
+
+        /* Heart Menu Button */
+        .menu-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .heart-button {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1001;
+            font-size: 26px;
+            color: white;
+        }
+
+        .heart-button:hover {
+            transform: scale(1.15);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .heart-button:active {
+            transform: scale(0.95);
+        }
+
+        .menu-container.expanded .heart-button {
+            transform: scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Menu Folder */
+        .menu-folder {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-origin: top right;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .menu-container.expanded .menu-folder {
+            width: 180px;
+            height: auto;
+            min-height: 220px;
+            border-radius: 20px;
+            opacity: 1;
+            pointer-events: auto;
+            padding: 15px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .menu-item {
+            width: 100%;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+            opacity: 0;
+            transform: scale(0.7) translateY(-15px);
+        }
+
+        .menu-container.expanded .menu-item {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .menu-container.expanded .menu-item:nth-child(1) {
+            transition-delay: 0.15s;
+        }
+
+        .menu-container.expanded .menu-item:nth-child(2) {
+            transition-delay: 0.25s;
+        }
+
+        .menu-container.expanded .menu-item:nth-child(3) {
+            transition-delay: 0.35s;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .menu-item:active {
+            transform: scale(0.95);
+        }
+
+        .menu-item.active {
+            background: rgba(100, 181, 246, 0.3);
+        }
+
+        .menu-item i {
+            color: white;
+            font-size: 24px;
+        }
+
+        .close-menu {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+            margin-top: 8px;
+            opacity: 0;
+            transform: scale(0.7);
+        }
+
+        .menu-container.expanded .close-menu {
+            opacity: 0.7;
+            transform: scale(1);
+            transition-delay: 0.45s;
+        }
+
+        .close-menu:hover {
+            opacity: 1;
+            transform: scale(1.15);
+        }
+
+        .close-menu i {
+            color: white;
+            font-size: 20px;
+        }
+
+        .card-flipper {
+            width: 100%;
+            max-width: min(520px, 90vw);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            will-change: transform;
+        }
+
+        .card-flipper.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .glass-card {
+            width: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
+            border-radius: clamp(24px, 5vw, 32px);
+            border: 1.5px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 32px rgba(13, 71, 161, 0.15);
+            padding: clamp(30px, 8vw, 60px) clamp(25px, 6vw, 50px);
+            position: relative;
+            overflow: hidden;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .glass-card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
+            border-radius: clamp(24px, 5vw, 32px);
+            border: 1.5px solid rgba(255, 255, 255, 0.35);
+            padding: clamp(30px, 8vw, 60px) clamp(25px, 6vw, 50px);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+            pointer-events: none;
+            border-radius: clamp(24px, 5vw, 32px);
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: clamp(30px, 8vw, 50px);
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-label {
+            display: inline-block;
+            background: rgba(100, 181, 246, 0.12);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: clamp(18px, 4vw, 24px);
+            padding: clamp(12px, 3vw, 16px) clamp(24px, 6vw, 40px);
+        }
+
+        .header-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(24px, 6vw, 32px);
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .counter-section {
+            text-align: center;
+            margin-top: clamp(20px, 5vw, 40px);
+            position: relative;
+            z-index: 2;
+        }
+
+        .counter-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(48px, 12vw, 88px);
+            font-weight: 700;
+            color: var(--text-counter);
+            letter-spacing: -2px;
+            margin-bottom: clamp(10px, 3vw, 20px);
+        }
+
+        .counter-number {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(1px, 0.5vw, 2px);
+            margin-top: clamp(5px, 2vw, 10px);
+            flex-wrap: wrap;
+            z-index: 2;
+        }
+
+        .digit-container {
+            display: inline-block;
+            width: clamp(40px, 10vw, 72px);
+            height: clamp(65px, 16vw, 120px);
+            overflow: hidden;
+        }
+
+        .digit-strip {
+            display: flex;
+            flex-direction: column;
+            transition: transform 2.0s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .digit {
+            width: clamp(40px, 10vw, 72px);
+            height: clamp(65px, 16vw, 120px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(60px, 15vw, 120px);
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--digit-color);
+        }
+
+        .accent-line {
+            width: clamp(40px, 10vw, 60px);
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            margin: clamp(20px, 5vw, 30px) auto;
+            border-radius: 2px;
+            z-index: 2;
+        }
+
+        .footer-info {
+            text-align: center;
+            margin-top: clamp(25px, 6vw, 40px);
+            padding-top: clamp(20px, 5vw, 30px);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            z-index: 2;
+        }
+
+        .footer-text {
+            font-size: 14px;
+            color: rgba(227, 242, 253, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .time-breakdown {
+            text-align: center;
+            z-index: 2;
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .time-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text-counter);
+            letter-spacing: -1px;
+        }
+
+        .time-label {
+            font-size: 14px;
+            color: rgba(227, 242, 253, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .swipe-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            animation: swipeHint 2s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes swipeHint {
+            0%, 100% { opacity: 0.5; transform: translateX(-50%); }
+            50% { opacity: 0.8; transform: translateX(-50%) translateX(10px); }
+        }
+
+        .particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .particle:nth-child(1) { top: 20%; left: 15%; }
+        .particle:nth-child(2) { top: 60%; left: 85%; animation-delay: 1s; }
+        .particle:nth-child(3) { top: 80%; left: 25%; animation-delay: 2s; }
+        .particle:nth-child(4) { top: 30%; left: 75%; animation-delay: 3s; }
+        .particle:nth-child(5) { top: 70%; left: 60%; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); opacity: 0.3; }
+            50% { transform: translateY(-20px); opacity: 0.6; }
+        }
+
+        .widget-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .widget-modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .widget-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .widget-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .widget-preview {
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .widget-card {
+            width: 100%;
+            height: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(35px);
+            border: 1.5px solid rgba(255, 255, 255, 0.35);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .widget-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+            pointer-events: none;
+            border-radius: 20px;
+        }
+
+        .widget-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 80px;
+            font-weight: 700;
+            color: var(--text-counter);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .widget-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .widget-footer {
+            font-size: 10px;
+            color: rgba(227, 242, 253, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .widget-instructions {
+            margin-top: 30px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .widget-instructions h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .widget-instructions ol {
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        .widget-instructions li {
+            margin: 8px 0;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .notification-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(100, 181, 246, 0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 15px 25px;
+            color: white;
+            font-size: 14px;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .notification-toast.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 350px) {
+            .counter-text { font-size: 40px; }
+            .digit-container { width: 36px; height: 58px; }
+            .digit { width: 36px; height: 58px; font-size: 54px; }
+            .time-value { font-size: 32px; }
+        }
+
+        @media (min-width: 1400px) {
+            .glass-card { max-width: 600px; }
+            .counter-text { font-size: 100px; }
+            .digit-container { width: 85px; height: 140px; }
+            .digit { width: 85px; height: 140px; font-size: 140px; }
+            .time-value { font-size: 52px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="grid-overlay"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    
+    <!-- Heart Menu -->
+    <div class="menu-container" id="menuContainer">
+        <button class="heart-button" id="heartButton" title="Menu">
+            ♡
+        </button>
+        
+        <div class="menu-folder" id="menuFolder">
+            <div class="menu-item" id="notificationButton" title="Enable Notifications">
+                <i class="material-icons">notifications</i>
+            </div>
+            <div class="menu-item" id="widgetButton" title="Add Widget">
+                <i class="material-icons">widgets</i>
+            </div>
+            <div class="menu-item" id="shareButton" title="Share">
+                <i class="material-icons">share</i>
+            </div>
+            <div class="close-menu" id="closeMenu">
+                <i class="material-icons">close</i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="poster-container">
+        <div class="card-flipper" id="cardFlipper">
+            <div class="glass-card">
+                <div class="header">
+                    <div class="header-label">
+                        <div class="header-text">Daycounter</div>
+                    </div>
+                </div>
+                <div class="counter-section">
+                    <div class="counter-text">ժαᥡ</div>
+                    <div class="counter-number" id="dayCounter"></div>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="footer-info">
+                    <div class="footer-text">since silence♡</div>
+                </div>
+                <div class="swipe-hint">Swipe right →</div>
+            </div>
+            <div class="glass-card-back">
+                <div class="time-breakdown">
+                    <div class="time-row">
+                        <div>
+                            <div class="time-value" id="hoursCount">0</div>
+                            <div class="time-label">Hours</div>
+                        </div>
+                    </div>
+                    <div class="time-row">
+                        <div>
+                            <div class="time-value" id="secondsCount">0</div>
+                            <div class="time-label">Seconds</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swipe-hint">← Swipe left</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="widget-modal" id="widgetModal">
+        <div class="widget-content">
+            <button class="close-button" id="closeWidgetModal">×</button>
+            <div class="widget-title">4x4 Widget</div>
+            
+            <div class="widget-preview" id="widgetPreview">
+                <div class="widget-card">
+                    <div class="widget-label">ժαᥡ</div>
+                    <div class="widget-number" id="widgetNumber">0</div>
+                    <div class="widget-footer">since silence♡</div>
+                </div>
+            </div>
+            
+            <div class="widget-instructions">
+                <h3>Widget Information:</h3>
+                <p style="margin: 10px 0; line-height: 1.8;">
+                    Widgets are automatically created when you install the app.<br><br>
+                    <strong>Install Steps:</strong><br>
+                    1. Open this app in Chrome<br>
+                    2. Tap menu (⋮) → "Add to Home screen"<br>
+                    3. Widget will appear in your widgets list<br>
+                    4. Long press home screen → Widgets → Day Counter
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-toast" id="notificationToast"></div>
+
+    <script>
+        // Heart Menu
+        const menuContainer = document.getElementById('menuContainer');
+        const heartButton = document.getElementById('heartButton');
+        const closeMenu = document.getElementById('closeMenu');
+
+        heartButton.addEventListener('click', () => {
+            menuContainer.classList.add('expanded');
+        });
+
+        closeMenu.addEventListener('click', () => {
+            menuContainer.classList.remove('expanded');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!menuContainer.contains(e.target) && menuContainer.classList.contains('expanded')) {
+                menuContainer.classList.remove('expanded');
+            }
+        });
+
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+
+        // Theme definitions
+        const themes = {
+            night: {
+                bg: ['#0d1b2a', '#1b263b', '#415a77', '#778da9', '#1b263b'],
+                orbs: ['#415a77', '#1b263b', '#778da9'],
+                glass: [65, 90, 119, 0.15],
+                text: [176, 190, 197],
+                counter: [119, 141, 169],
+                digit: [119, 141, 169],
+                accent: [119, 141, 169]
+            },
+            dawn: {
+                bg: ['rgba(30, 0, 50, 1)', 'rgba(25, 0, 60, 1)', 'rgba(15, 0, 80, 1)', 'rgba(5, 5, 110, 1)', 'rgba(9, 9, 121, 1)'],
+                orbs: ['rgba(30, 0, 50, 0.8)', 'rgba(15, 0, 80, 0.8)', 'rgba(9, 9, 121, 0.8)'],
+                glass: [25, 10, 85, 0.15],
+                text: [200, 200, 220],
+                counter: [75, 60, 150],
+                digit: [90, 70, 160],
+                accent: [80, 50, 140]
+            },
+            day: {
+                bg: ['#0a4d8c', '#1e88e5', '#42a5f5', '#64b5f6', '#90caf9'],
+                orbs: ['#1565c0', '#0d47a1', '#2196f3'],
+                glass: [100, 181, 246, 0.15],
+                text: [227, 242, 253],
+                counter: [33, 150, 243],
+                digit: [66, 165, 245],
+                accent: [66, 165, 245]
+            },
+            dusk: {
+                bg: ['#4a148c', '#7b1fa2', '#9c27b0', '#ba68c8', '#ce93d8'],
+                orbs: ['#7b1fa2', '#9c27b0', '#ba68c8'],
+                glass: [186, 104, 200, 0.15],
+                text: [243, 229, 245],
+                counter: [186, 104, 200],
+                digit: [186, 104, 200],
+                accent: [186, 104, 200]
+            }
+        };
+
+        function parseColor(color) {
+            const div = document.createElement('div');
+            div.style.color = color;
+            document.body.appendChild(div);
+            const computed = getComputedStyle(div).color;
+            document.body.removeChild(div);
+            const match = computed.match(/\d+/g);
+            return match ? match.map(Number) : [0, 0, 0];
+        }
+
+        function parseColorWithAlpha(color) {
+            if (color.startsWith('rgba')) {
+                const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]*)\)/);
+                if (match) {
+                    return { r: parseInt(match[1]), g: parseInt(match[2]), b: parseInt(match[3]), a: match[4] ? parseFloat(match[4]) : 1 };
+                }
+            }
+            const rgb = parseColor(color);
+            return { r: rgb[0], g: rgb[1], b: rgb[2], a: 1 };
+        }
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        function getTransitionProgress() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const totalMinutes = hours * 60 + minutes + seconds / 60;
+            
+            let fromTheme, toTheme, progress;
+            
+            if (hours >= 4 && hours < 5) { fromTheme = 'night'; toTheme = 'dawn'; progress = totalMinutes / 60 - 4; }
+            else if (hours >= 5 && hours < 6) { fromTheme = 'dawn'; toTheme = 'dawn'; progress = 0; }
+            else if (hours >= 6 && hours < 7) { fromTheme = 'dawn'; toTheme = 'day'; progress = totalMinutes / 60 - 6; }
+            else if (hours >= 7 && hours < 16) { fromTheme = 'day'; toTheme = 'day'; progress = 0; }
+            else if (hours >= 16 && hours < 17) { fromTheme = 'day'; toTheme = 'dusk'; progress = totalMinutes / 60 - 16; }
+            else if (hours >= 17 && hours < 19) { fromTheme = 'dusk'; toTheme = 'dusk'; progress = 0; }
+            else if (hours >= 19 && hours < 20) { fromTheme = 'dusk'; toTheme = 'night'; progress = totalMinutes / 60 - 19; }
+            else { fromTheme = 'night'; toTheme = 'night'; progress = 0; }
+            
+            return { fromTheme, toTheme, progress: Math.max(0, Math.min(1, progress)) };
+        }
+
+        function updateColors() {
+            const { fromTheme, toTheme, progress } = getTransitionProgress();
+            const t1 = themes[fromTheme];
+            const t2 = themes[toTheme];
+            const root = document.documentElement;
+            
+            t1.bg.forEach((color, i) => {
+                const c1 = parseColorWithAlpha(color);
+                const c2 = parseColorWithAlpha(t2.bg[i]);
+                const r = Math.round(lerp(c1.r, c2.r, progress));
+                const g = Math.round(lerp(c1.g, c2.g, progress));
+                const b = Math.round(lerp(c1.b, c2.b, progress));
+                const a = lerp(c1.a, c2.a, progress);
+                root.style.setProperty(`--bg-color-${i+1}`, `rgba(${r},${g},${b},${a.toFixed(2)})`);
+            });
+            
+            t1.orbs.forEach((color, i) => {
+                const c1 = parseColorWithAlpha(color);
+                const c2 = parseColorWithAlpha(t2.orbs[i]);
+                const r = Math.round(lerp(c1.r, c2.r, progress));
+                const g = Math.round(lerp(c1.g, c2.g, progress));
+                const b = Math.round(lerp(c1.b, c2.b, progress));
+                const a = lerp(c1.a, c2.a, progress);
+                root.style.setProperty(`--orb-color-${i+1}`, `rgba(${r},${g},${b},${a.toFixed(2)})`);
+            });
+            
+            const glass = `rgba(${Math.round(lerp(t1.glass[0], t2.glass[0], progress))},${Math.round(lerp(t1.glass[1], t2.glass[1], progress))},${Math.round(lerp(t1.glass[2], t2.glass[2], progress))},${lerp(t1.glass[3], t2.glass[3], progress).toFixed(2)})`;
+            const text = `rgb(${Math.round(lerp(t1.text[0], t2.text[0], progress))},${Math.round(lerp(t1.text[1], t2.text[1], progress))},${Math.round(lerp(t1.text[2], t2.text[2], progress))})`;
+            const counter = `rgb(${Math.round(lerp(t1.counter[0], t2.counter[0], progress))},${Math.round(lerp(t1.counter[1], t2.counter[1], progress))},${Math.round(lerp(t1.counter[2], t2.counter[2], progress))})`;
+            const digit = `rgb(${Math.round(lerp(t1.digit[0], t2.digit[0], progress))},${Math.round(lerp(t1.digit[1], t2.digit[1], progress))},${Math.round(lerp(t1.digit[2], t2.digit[2], progress))})`;
+            const accent = `rgb(${Math.round(lerp(t1.accent[0], t2.accent[0], progress))},${Math.round(lerp(t1.accent[1], t2.accent[1], progress))},${Math.round(lerp(t1.accent[2], t2.accent[2], progress))})`;
+            
+            root.style.setProperty('--glass-bg', glass);
+            root.style.setProperty('--text-primary', text);
+            root.style.setProperty('--text-counter', counter);
+            root.style.setProperty('--digit-color', digit);
+            root.style.setProperty('--accent-color', accent);
+            
+            const bg1 = parseColorWithAlpha(t1.bg[0]);
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', `rgb(${bg1.r},${bg1.g},${bg1.b})`);
+        }
+
+        updateColors();
+        setInterval(updateColors, 1000);
+
+        function calculateDays() {
+            const startDate = new Date('2025-09-12T00:00:00');
+            const today = new Date();
+            return Math.ceil((today - startDate) / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateTimeBreakdown() {
+            const startDate = new Date('2025-09-12T00:00:00');
+            const now = new Date();
+            const diffMs = now - startDate;
+            return { hours: Math.floor(diffMs / (1000 * 60 * 60)), seconds: Math.floor(diffMs / 1000) };
+        }
+
+        function createDigitContainer() {
+            const container = document.createElement('div');
+            container.className = 'digit-container';
+            const strip = document.createElement('div');
+            strip.className = 'digit-strip';
+            for (let i = 0; i <= 9; i++) {
+                const digit = document.createElement('div');
+                digit.className = 'digit';
+                digit.textContent = i;
+                strip.appendChild(digit);
+            }
+            container.appendChild(strip);
+            return { container, strip };
+        }
+
+        function getDigitHeight() {
+            return Math.max(65, Math.min(16 * (window.innerWidth / 100), 120));
+        }
+
+        function updateCounter() {
+            const dayCount = calculateDays();
+            const counterElement = document.getElementById('dayCounter');
+            const widgetNumber = document.getElementById('widgetNumber');
+            
+            if (widgetNumber) widgetNumber.textContent = dayCount;
+            
+            const countStr = dayCount.toString();
+            counterElement.innerHTML = '';
+            
+            const strips = [];
+            for (let i = 0; i < countStr.length; i++) {
+                const { container, strip } = createDigitContainer();
+                counterElement.appendChild(container);
+                strips.push({ strip, digit: parseInt(countStr[i]) });
+            }
+            
+            const digitHeight = getDigitHeight();
+            strips.forEach((item, index) => {
+                setTimeout(() => {
+                    item.strip.style.transform = `translateY(${-item.digit * digitHeight}px)`;
+                }, index * 200);
+            });
+        }
+
+        function updateTimeBreakdown() {
+            const { hours, seconds } = calculateTimeBreakdown();
+            const hoursElement = document.getElementById('hoursCount');
+            const secondsElement = document.getElementById('secondsCount');
+            if (hoursElement) hoursElement.textContent = hours.toLocaleString();
+            if (secondsElement) secondsElement.textContent = seconds.toLocaleString();
+        }
+
+        updateCounter();
+        updateTimeBreakdown();
+        setInterval(updateCounter, 60000);
+        setInterval(updateTimeBreakdown, 1000);
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(updateCounter, 250);
+        });
+
+        let touchStartX = 0;
+        let isFlipped = false;
+        const cardFlipper = document.getElementById('cardFlipper');
+
+        cardFlipper.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, false);
+        cardFlipper.addEventListener('touchend', (e) => {
+            const diff = e.changedTouches[0].screenX - touchStartX;
+            if (diff > 100 && !isFlipped) { cardFlipper.classList.add('flipped'); isFlipped = true; }
+            else if (diff < -100 && isFlipped) { cardFlipper.classList.remove('flipped'); isFlipped = false; }
+        }, false);
+
+        function getCurrentColors() {
+            const root = document.documentElement;
+            const styles = getComputedStyle(root);
+            const bgColors = [];
+            for (let i = 1; i <= 5; i++) bgColors.push(styles.getPropertyValue(`--bg-color-${i}`).trim());
+            return { bgColors, textPrimary: styles.getPropertyValue('--text-primary').trim(), textCounter: styles.getPropertyValue('--text-counter').trim(), glassBg: styles.getPropertyValue('--glass-bg').trim() };
+        }
+
+        // Share
+        const shareButton = document.getElementById('shareButton');
+        shareButton.addEventListener('click', async () => {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1200; canvas.height = 1600;
+                const currentColors = getCurrentColors();
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, currentColors.bgColors[0]);
+                gradient.addColorStop(0.25, currentColors.bgColors[1]);
+                gradient.addColorStop(0.5, currentColors.bgColors[2]);
+                gradient.addColorStop(0.75, currentColors.bgColors[3]);
+                gradient.addColorStop(1, currentColors.bgColors[4]);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = currentColors.glassBg;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.lineWidth = 3;
+                const cardX = 150, cardY = 200, cardWidth = 900, cardHeight = 1200, borderRadius = 32;
+                ctx.beginPath();
+                ctx.moveTo(cardX + borderRadius, cardY);
+                ctx.lineTo(cardX + cardWidth - borderRadius, cardY);
+                ctx.quadraticCurveTo(cardX + cardWidth, cardY, cardX + cardWidth, cardY + borderRadius);
+                ctx.lineTo(cardX + cardWidth, cardY + cardHeight - borderRadius);
+                ctx.quadraticCurveTo(cardX + cardWidth, cardY + cardHeight, cardX + cardWidth - borderRadius, cardY + cardHeight);
+                ctx.lineTo(cardX + borderRadius, cardY + cardHeight);
+                ctx.quadraticCurveTo(cardX, cardY + cardHeight, cardX, cardY + cardHeight - borderRadius);
+                ctx.lineTo(cardX, cardY + borderRadius);
+                ctx.quadraticCurveTo(cardX, cardY, cardX + borderRadius, cardY);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = currentColors.textPrimary;
+                ctx.font = 'bold 64px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Daycounter', canvas.width / 2, 380);
+                ctx.fillStyle = currentColors.textCounter;
+                ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillText('ժαᥡ', canvas.width / 2, 620);
+                const dayCount = calculateDays();
+                ctx.font = 'bold 180px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillText(dayCount.toString(), canvas.width / 2, 880);
+                ctx.fillStyle = 'rgba(227, 242, 253, 0.7)';
+                ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillText('SINCE SILENCE', canvas.width / 2, 1100);
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'day-counter.png', { type: 'image/png' });
+                    if (navigator.share && navigator.canShare({ files: [file] })) {
+                        try { await navigator.share({ files: [file], title: 'Day Counter', text: `It's been ${dayCount} days since silence` }); }
+                        catch (err) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `day-counter-${Date.now()}.png`; a.click(); URL.revokeObjectURL(url); }
+                    } else { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `day-counter-${Date.now()}.png`; a.click(); URL.revokeObjectURL(url); }
+                }, 'image/png');
+            } catch (err) { console.error('Error creating share image:', err); }
+        });
+
+        // Widget Modal
+        const widgetButton = document.getElementById('widgetButton');
+        const widgetModal = document.getElementById('widgetModal');
+        const closeWidgetModal = document.getElementById('closeWidgetModal');
+
+        widgetButton.addEventListener('click', () => { widgetModal.classList.add('active'); });
+        closeWidgetModal.addEventListener('click', () => { widgetModal.classList.remove('active'); });
+        widgetModal.addEventListener('click', (e) => { if (e.target === widgetModal) widgetModal.classList.remove('active'); });
+
+        // Notifications
+        const notificationButton = document.getElementById('notificationButton');
+        const notificationToast = document.getElementById('notificationToast');
+        const notificationsSupported = 'Notification' in window;
+
+        function updateNotificationButton() {
+            if (!notificationsSupported) { notificationButton.style.opacity = '0.5'; return; }
+            if (Notification.permission === 'granted') notificationButton.classList.add('active');
+            else if (Notification.permission === 'denied') notificationButton.style.opacity = '0.5';
+        }
+
+        updateNotificationButton();
+
+        function showToast(message) {
+            notificationToast.textContent = message;
+            notificationToast.classList.add('show');
+            setTimeout(() => { notificationToast.classList.remove('show'); }, 3000);
+        }
+
+        notificationButton.addEventListener('click', async () => {
+            if (!notificationsSupported) { showToast('Notifications not supported'); return; }
+            if (Notification.permission === 'granted') {
+                showToast('Notifications enabled! Daily at 7 AM');
+                new Notification('Day Counter', { body: `ժαᥡ${calculateDays()}, another day.. Gone... :)`, icon: '/icon-192.png', badge: '/icon-192.png', tag: 'day-counter-test' });
+                return;
+            }
+            if (Notification.permission === 'denied') { showToast('Notifications blocked. Enable in browser settings.'); return; }
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    notificationButton.classList.add('active');
+                    showToast('Notifications enabled! Daily at 7 AM');
+                    new Notification('Day Counter', { body: `ժαᥡ${calculateDays()}, another day.. Gone... :)`, icon: '/icon-192.png', badge: '/icon-192.png', tag: 'day-counter-test' });
+                } else showToast('Notification permission denied');
+                updateNotificationButton();
+            } catch (err) { console.error('Error:', err); showToast('Error enabling notifications'); }
+        });
+
+        function checkAndTriggerNotification() {
+            if (!notificationsSupported || Notification.permission !== 'granted') return;
+            const now = new Date();
+            if (now.getHours() === 7 && now.getMinutes() === 0) {
+                const lastNotification = localStorage.getItem('lastNotificationDate');
+                const today = now.toDateString();
+                if (lastNotification !== today) {
+                    new Notification('Day Counter', { body: `ժαᥡ${calculateDays()}, another day.. Gone... :)`, icon: '/icon-192.png', badge: '/icon-192.png', tag: 'day-counter-daily' });
+                    localStorage.setItem('lastNotificationDate', today);
+                }
+            }
+        }
+
+        setInterval(checkAndTriggerNotification, 60000);
+    </script>
+</body>
+</html>
